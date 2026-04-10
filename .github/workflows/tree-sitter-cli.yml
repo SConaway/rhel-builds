@@ -1,0 +1,64 @@
+name: Build tree-sitter-cli
+
+on:
+  push:
+    paths:
+      - 'packages/tree-sitter-cli/**'
+      - 'build.sh'
+      - '.github/workflows/tree-sitter-cli.yml'
+    tags:
+      - 'tree-sitter-cli-v*'
+  pull_request:
+    paths:
+      - 'packages/tree-sitter-cli/**'
+      - 'build.sh'
+      - '.github/workflows/tree-sitter-cli.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rhel_version: [rhel8, rhel9]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.rhel_version }}
+        run: ./build.sh tree-sitter-cli ${{ matrix.rhel_version }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tree-sitter-cli-${{ matrix.rhel_version }}
+          path: output/tree-sitter-cli/${{ matrix.rhel_version }}/
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/tree-sitter-cli-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: false
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#tree-sitter-cli-v}"
+
+          gh release create "${TAG}" \
+            --title "tree-sitter-cli v${VERSION}" \
+            --notes "Binary builds of [tree-sitter-cli v${VERSION}](https://github.com/tree-sitter/tree-sitter/releases/tag/v${VERSION}) for RHEL8 and RHEL9 (built on AlmaLinux)." \
+            artifacts/**/*.tar.gz \
+            artifacts/**/*.sha256
