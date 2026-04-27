@@ -36,6 +36,22 @@ STAGING="/build/staging/${ARTIFACT_NAME}"
 mkdir -p "${STAGING}"
 make install DESTDIR="${STAGING}"
 
+echo "==> Adding relocatable wrapper"
+# The git binary has /usr/local/libexec/git-core hardcoded as its exec-path.
+# This wrapper sets GIT_EXEC_PATH relative to its own location so the tarball
+# works correctly regardless of where it is extracted.
+GIT_REAL="${STAGING}/usr/local/bin/git.real"
+GIT_BIN="${STAGING}/usr/local/bin/git"
+mv "${GIT_BIN}" "${GIT_REAL}"
+cat > "${GIT_BIN}" <<'WRAPPER'
+#!/bin/sh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export GIT_EXEC_PATH="${SCRIPT_DIR}/../libexec/git-core"
+export GIT_TEMPLATE_DIR="${SCRIPT_DIR}/../share/git-core/templates"
+exec "${SCRIPT_DIR}/git.real" "$@"
+WRAPPER
+chmod +x "${GIT_BIN}"
+
 echo "==> Packaging"
 TARBALL="/build/output/${ARTIFACT_NAME}.tar.gz"
 tar -czf "${TARBALL}" -C /build/staging "${ARTIFACT_NAME}"
