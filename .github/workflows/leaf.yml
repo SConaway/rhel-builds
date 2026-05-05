@@ -1,0 +1,64 @@
+name: Build leaf
+
+on:
+  push:
+    paths:
+      - 'packages/leaf/**'
+      - 'build.sh'
+      - '.github/workflows/leaf.yml'
+    tags:
+      - 'leaf-v*'
+  pull_request:
+    paths:
+      - 'packages/leaf/**'
+      - 'build.sh'
+      - '.github/workflows/leaf.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rhel_version: [rhel8, rhel9]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.rhel_version }}
+        run: ./build.sh leaf ${{ matrix.rhel_version }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: leaf-${{ matrix.rhel_version }}
+          path: output/leaf/${{ matrix.rhel_version }}/
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/leaf-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: false
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#leaf-v}"
+
+          gh release create "${TAG}" \
+            --title "leaf v${VERSION}" \
+            --notes "Binary builds of [leaf v${VERSION}](https://github.com/RivoLink/leaf/releases/tag/${VERSION}) for RHEL8 and RHEL9 (built on AlmaLinux)." \
+            artifacts/**/*.tar.gz \
+            artifacts/**/*.sha256
