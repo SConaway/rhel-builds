@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rhel_version: [rhel8, rhel9]
+        rhel_version: [rhel8]  # add rhel9 if rhel8 build doesn't run on RHEL9
 
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +59,6 @@ jobs:
 
           gh release create "${TAG}" \
             --title "tree-sitter-cli v${VERSION}" \
-            --notes "Binary builds of [tree-sitter-cli v${VERSION}](https://github.com/tree-sitter/tree-sitter/releases/tag/v${VERSION}) for RHEL8 and RHEL9 (built on AlmaLinux)." \
+            --notes "Binary builds of [tree-sitter-cli v${VERSION}](https://github.com/tree-sitter/tree-sitter/releases/tag/v${VERSION}) for RHEL8/9 (built on AlmaLinux 8)." \
             artifacts/**/*.tar.gz \
             artifacts/**/*.sha256

@@ -40,7 +40,8 @@ Binaries built on AlmaLinux 8 (glibc 2.28) are forwards-compatible with AlmaLinu
 
 Each workflow:
 - Triggers on pushes that touch `packages/<name>/`, `build.sh`, or the workflow file itself, and on `<name>-v*` tags
-- Builds a matrix of `[rhel8, rhel9]`
-- On a `<name>-v*` tag, the `release` job creates a GitHub release and uploads both tarballs + sha256 files
+- Builds rhel8 only (AlmaLinux 8 binaries run on both RHEL8 and RHEL9 due to glibc forwards-compatibility)
+- On a `<name>-v*` tag, the `release` job creates a GitHub release and uploads the tarball + sha256
+- Only add an rhel9 build job if the rhel8 binary is confirmed to not work on RHEL9
 
 Tag convention for releases: `<package>-v<upstream-version>` (e.g. `leaf-v1.18.2`, `git-v2.54.0`).
