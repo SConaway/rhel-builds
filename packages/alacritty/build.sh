@@ -52,6 +52,9 @@ echo "==> Packaging binary"
 TARBALL="/build/output/${ARTIFACT_NAME}.tar.gz"
 tar -czf "${TARBALL}" -C /build/staging "${ARTIFACT_NAME}"
 
+echo "==> Source extra/ contents"
+find extra/ -type f | sort
+
 echo "==> Packaging extras (completions + config)"
 EXTRAS_NAME="${NAME}-extras-${VERSION}"
 EXTRAS_STAGING="/build/staging/${EXTRAS_NAME}"
@@ -59,7 +62,12 @@ mkdir -p "${EXTRAS_STAGING}/completions"
 cp extra/completions/alacritty.bash  "${EXTRAS_STAGING}/completions/alacritty.bash"
 cp extra/completions/alacritty.fish  "${EXTRAS_STAGING}/completions/alacritty.fish"
 cp extra/completions/_alacritty      "${EXTRAS_STAGING}/completions/_alacritty"
-cp extra/alacritty.toml              "${EXTRAS_STAGING}/alacritty.toml"
+# sample toml not present in all releases
+if [[ -f "extra/alacritty.toml" ]]; then
+    cp extra/alacritty.toml "${EXTRAS_STAGING}/alacritty.toml"
+else
+    echo "==> Note: no extra/alacritty.toml in source, skipping"
+fi
 EXTRAS_TARBALL="/build/output/${EXTRAS_NAME}.tar.gz"
 tar -czf "${EXTRAS_TARBALL}" -C /build/staging "${EXTRAS_NAME}"
 
