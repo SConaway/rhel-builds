@@ -48,13 +48,26 @@ STAGING="/build/staging/${ARTIFACT_NAME}"
 mkdir -p "${STAGING}/bin"
 cp target/release/alacritty "${STAGING}/bin/alacritty"
 
-echo "==> Packaging"
+echo "==> Packaging binary"
 TARBALL="/build/output/${ARTIFACT_NAME}.tar.gz"
 tar -czf "${TARBALL}" -C /build/staging "${ARTIFACT_NAME}"
 
+echo "==> Packaging extras (completions + config)"
+EXTRAS_NAME="${NAME}-extras-${VERSION}"
+EXTRAS_STAGING="/build/staging/${EXTRAS_NAME}"
+mkdir -p "${EXTRAS_STAGING}/completions"
+cp extra/completions/alacritty.bash  "${EXTRAS_STAGING}/completions/alacritty.bash"
+cp extra/completions/alacritty.fish  "${EXTRAS_STAGING}/completions/alacritty.fish"
+cp extra/completions/_alacritty      "${EXTRAS_STAGING}/completions/_alacritty"
+cp extra/alacritty.toml              "${EXTRAS_STAGING}/alacritty.toml"
+EXTRAS_TARBALL="/build/output/${EXTRAS_NAME}.tar.gz"
+tar -czf "${EXTRAS_TARBALL}" -C /build/staging "${EXTRAS_NAME}"
+
 echo "==> Generating checksums"
 cd /build/output
-sha256sum "${ARTIFACT_NAME}.tar.gz" > "${ARTIFACT_NAME}.tar.gz.sha256"
+sha256sum "${ARTIFACT_NAME}.tar.gz"  > "${ARTIFACT_NAME}.tar.gz.sha256"
+sha256sum "${EXTRAS_NAME}.tar.gz"    > "${EXTRAS_NAME}.tar.gz.sha256"
 
 echo "==> Done"
 cat "${ARTIFACT_NAME}.tar.gz.sha256"
+cat "${EXTRAS_NAME}.tar.gz.sha256"
