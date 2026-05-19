@@ -60,6 +60,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
+          shopt -s globstar
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#alacritty-v}"
 

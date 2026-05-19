@@ -25,6 +25,7 @@ dnf install -y --allowerasing \
     gcc gcc-c++ make cmake pkg-config \
     freetype-devel fontconfig-devel \
     libxcb-devel libxkbcommon-devel \
+    ncurses \
     tar curl ca-certificates
 
 echo "==> Installing Rust toolchain"
@@ -66,6 +67,20 @@ if [[ -f "extra/alacritty.toml" ]]; then
     cp extra/alacritty.toml "${EXTRAS_STAGING}/alacritty.toml"
 else
     echo "==> Note: no extra/alacritty.toml in source, skipping"
+fi
+# terminfo (alacritty.info defines both alacritty and alacritty-direct since v0.12)
+if [[ -f "extra/alacritty.info" ]]; then
+    mkdir -p "${EXTRAS_STAGING}/terminfo"
+    tic -xe alacritty,alacritty-direct -o "${EXTRAS_STAGING}/terminfo" extra/alacritty.info
+else
+    echo "==> Note: no extra/alacritty.info in source, skipping terminfo"
+fi
+# .desktop file
+if [[ -f "extra/linux/Alacritty.desktop" ]]; then
+    mkdir -p "${EXTRAS_STAGING}/desktop"
+    cp extra/linux/Alacritty.desktop "${EXTRAS_STAGING}/desktop/Alacritty.desktop"
+else
+    echo "==> Note: no extra/linux/Alacritty.desktop in source, skipping"
 fi
 mkdir -p /build/output/extras
 EXTRAS_TARBALL="/build/output/extras/${EXTRAS_NAME}.tar.gz"
