@@ -68,14 +68,16 @@ if [[ -f "extra/alacritty.toml" ]]; then
 else
     echo "==> Note: no extra/alacritty.toml in source, skipping"
 fi
-EXTRAS_TARBALL="/build/output/${EXTRAS_NAME}.tar.gz"
+mkdir -p /build/output/extras
+EXTRAS_TARBALL="/build/output/extras/${EXTRAS_NAME}.tar.gz"
 tar -czf "${EXTRAS_TARBALL}" -C /build/staging "${EXTRAS_NAME}"
 
 echo "==> Generating checksums"
 cd /build/output
 sha256sum "${ARTIFACT_NAME}.tar.gz"  > "${ARTIFACT_NAME}.tar.gz.sha256"
+cd /build/output/extras
 sha256sum "${EXTRAS_NAME}.tar.gz"    > "${EXTRAS_NAME}.tar.gz.sha256"
 
 echo "==> Done"
-cat "${ARTIFACT_NAME}.tar.gz.sha256"
-cat "${EXTRAS_NAME}.tar.gz.sha256"
+cat "/build/output/${ARTIFACT_NAME}.tar.gz.sha256"
+cat "/build/output/extras/${EXTRAS_NAME}.tar.gz.sha256"

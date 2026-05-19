@@ -41,11 +41,11 @@ for RHEL_VERSION in "${VERSIONS[@]}"; do
 
     # Find tarball for this version; fall back to rhel8 if rhel9 has no dedicated build
     TARBALL=$(find "${SCRIPT_DIR}/output/${PACKAGE}/${RHEL_VERSION}" \
-        -name "*.tar.gz" ! -name "*.sha256" 2>/dev/null | head -1) || true
+        -maxdepth 1 -name "*.tar.gz" ! -name "*.sha256" 2>/dev/null | head -1) || true
 
     if [[ -z "${TARBALL}" && "${RHEL_VERSION}" == "rhel9" ]]; then
         TARBALL=$(find "${SCRIPT_DIR}/output/${PACKAGE}/rhel8" \
-            -name "*.tar.gz" ! -name "*.sha256" 2>/dev/null | head -1) || true
+            -maxdepth 1 -name "*.tar.gz" ! -name "*.sha256" 2>/dev/null | head -1) || true
         if [[ -n "${TARBALL}" ]]; then
             echo "==> No rhel9 build found; using rhel8 tarball to test on ${IMAGE}"
         fi
