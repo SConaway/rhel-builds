@@ -25,7 +25,6 @@ dnf install -y --allowerasing \
     gcc gcc-c++ make cmake pkg-config \
     freetype-devel fontconfig-devel \
     libxcb-devel libxkbcommon-devel \
-    wayland-devel wayland-protocols-devel \
     tar curl ca-certificates
 
 echo "==> Installing Rust toolchain"

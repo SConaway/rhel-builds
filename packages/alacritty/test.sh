@@ -3,6 +3,6 @@
 set -euo pipefail
 
 # Install runtime libs present on a real RHEL8 system but absent in the minimal test image.
-dnf install -y -q fontconfig freetype libxcb libxkbcommon wayland
+dnf install -y -q fontconfig freetype libxcb libxkbcommon
 
 "${1}/bin/alacritty" --version
