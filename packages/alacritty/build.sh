@@ -71,6 +71,7 @@ fi
 # terminfo (alacritty.info defines both alacritty and alacritty-direct since v0.12)
 if [[ -f "extra/alacritty.info" ]]; then
     mkdir -p "${EXTRAS_STAGING}/terminfo"
+    cp extra/alacritty.info "${EXTRAS_STAGING}/terminfo/alacritty.info"
     tic -xe alacritty,alacritty-direct -o "${EXTRAS_STAGING}/terminfo" extra/alacritty.info
 else
     echo "==> Note: no extra/alacritty.info in source, skipping terminfo"
