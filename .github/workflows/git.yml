@@ -2,6 +2,7 @@ name: Build git
 
 on:
   push:
+    branches: ['**']
     paths:
       - 'packages/git/**'
       - 'build.sh'

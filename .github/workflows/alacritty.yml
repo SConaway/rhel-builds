@@ -2,6 +2,7 @@ name: Build alacritty
 
 on:
   push:
+    branches: ['**']
     paths:
       - 'packages/alacritty/**'
       - 'build.sh'
