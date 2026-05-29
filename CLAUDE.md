@@ -19,6 +19,17 @@ Valid RHEL versions: `rhel8`, `rhel9` (or bare `8`, `9`).
 
 Output lands in `output/<package>/<rhel-version>/` (gitignored). The top-level `build.sh` runs the package's own `build.sh` inside the appropriate `almalinux:8` or `almalinux:9` Docker container, mounting the package dir read-only at `/build/package` and the output dir at `/build/output`.
 
+## Testing
+
+```bash
+./test.sh <package> [rhel-version]
+# e.g.
+./test.sh leaf rhel8      # test on AlmaLinux 8 only
+./test.sh leaf            # test on both AlmaLinux 8 and 9
+```
+
+Must build first (`./build.sh`). When no rhel-version is given, rhel9 falls back to the rhel8 tarball automatically (glibc forwards-compat). Each package's `packages/<name>/test.sh` receives the unpacked artifact root as `$1` and should exit non-zero on failure.
+
 ## Adding a new package
 
 1. Create `packages/<name>/build.sh` — this runs inside the container as root.
@@ -34,14 +45,14 @@ Output lands in `output/<package>/<rhel-version>/` (gitignored). The top-level `
 
 ### Portability note
 
-Binaries built on AlmaLinux 8 (glibc 2.28) are forwards-compatible with AlmaLinux 9 (glibc 2.34). A single rhel8 build can serve both RHEL8 and RHEL9 — verify with `docker run --rm -v ...:... almalinux:9 /path/to/binary --version`.
+Binaries built on AlmaLinux 8 (glibc 2.28) are forwards-compatible with AlmaLinux 9 (glibc 2.34). **Always build on AlmaLinux 8 first and verify it runs on AlmaLinux 9 with `./test.sh <package> rhel9`.** Only add a separate rhel9 build if the rhel8 binary is confirmed to not work on RHEL9 — separate builds and releases are a last resort, not the default.
 
 ## GitHub Actions / Releases
 
 Each workflow:
-- Triggers on pushes that touch `packages/<name>/`, `build.sh`, or the workflow file itself, and on `<name>-v*` tags
+- Triggers on branch pushes that touch `packages/<name>/`, `build.sh`, or the workflow file itself, and on `<name>-v*` tags. **Both `branches: ['**']` and `tags` must be present under `push`** — omitting `branches` causes GitHub Actions to silently ignore branch pushes when a `tags` filter is present.
 - Builds rhel8 only (AlmaLinux 8 binaries run on both RHEL8 and RHEL9 due to glibc forwards-compatibility)
 - On a `<name>-v*` tag, the `release` job creates a GitHub release and uploads the tarball + sha256
-- Only add an rhel9 build job if the rhel8 binary is confirmed to not work on RHEL9
+- Only add an rhel9 build job if the rhel8 binary is confirmed not to work on RHEL9 (see portability note above)
 
 Tag convention for releases: `<package>-v<upstream-version>` (e.g. `leaf-v1.18.2`, `git-v2.54.0`).
