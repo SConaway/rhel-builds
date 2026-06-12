@@ -35,6 +35,11 @@ curl -fL "${SOURCE_URL}" -o "/build/src/opencode-${VERSION}.tar.gz"
 tar -xzf "/build/src/opencode-${VERSION}.tar.gz" -C /build/src
 SRC="/build/src/opencode-${VERSION}"
 
+echo "==> Patching flag.ts: hardcode OPENCODE_DISABLE_AUTOUPDATE=true"
+sed -i 's/OPENCODE_DISABLE_AUTOUPDATE: truthy("OPENCODE_DISABLE_AUTOUPDATE"),/OPENCODE_DISABLE_AUTOUPDATE: true,/' \
+    "${SRC}/packages/core/src/flag/flag.ts"
+grep "OPENCODE_DISABLE_AUTOUPDATE" "${SRC}/packages/core/src/flag/flag.ts"
+
 echo "==> Installing dependencies"
 cd "${SRC}"
 export PYTHON=/usr/bin/python3.8
