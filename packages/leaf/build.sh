@@ -3,7 +3,7 @@
 # Called by the top-level build.sh. Writes artifacts to /build/output.
 set -euo pipefail
 
-VERSION="1.23.2"
+VERSION="1.24.1"
 NAME="leaf"
 SOURCE_URL="https://github.com/RivoLink/leaf/archive/refs/tags/${VERSION}.tar.gz"
 
