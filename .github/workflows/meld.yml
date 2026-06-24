@@ -1,0 +1,71 @@
+name: Build meld
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'packages/meld/**'
+      - 'build.sh'
+      - '.github/workflows/meld.yml'
+    tags:
+      - 'meld-v*'
+  pull_request:
+    paths:
+      - 'packages/meld/**'
+      - 'build.sh'
+      - '.github/workflows/meld.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rhel_version: [rhel8]  # add rhel9 if rhel8 build doesn't run on RHEL9
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.rhel_version }}
+        run: ./build.sh meld ${{ matrix.rhel_version }}
+
+      - name: Test on AlmaLinux 8
+        run: ./test.sh meld rhel8
+
+      - name: Test on AlmaLinux 9 (rhel8 binary, glibc forwards-compat)
+        run: ./test.sh meld rhel9
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: meld-${{ matrix.rhel_version }}
+          path: output/meld/${{ matrix.rhel_version }}/
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/meld-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: false
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#meld-v}"
+
+          gh release create "${TAG}" \
+            --title "meld v${VERSION}" \
+            --notes "Binary builds of [meld v${VERSION}](https://gitlab.gnome.org/GNOME/meld/-/releases) for RHEL8/9 (built on AlmaLinux 8)." \
+            artifacts/**/*.tar.gz \
+            artifacts/**/*.sha256
