@@ -50,6 +50,9 @@ jobs:
           path: artifacts/
           merge-multiple: false
 
+      - name: List artifacts
+        run: find artifacts/ -type f | sort
+
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -58,8 +61,9 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#git-v}"
 
+          FILES=$(find artifacts/ -type f \( -name "*.tar.gz" -o -name "*.sha256" \))
+
           gh release create "${TAG}" \
             --title "git v${VERSION}" \
             --notes "Binary builds of [git v${VERSION}](https://github.com/git/git/releases/tag/v${VERSION}) for RHEL8/9 (built on AlmaLinux 8)." \
-            artifacts/*/*.tar.gz \
-            artifacts/*/*.sha256
+            ${FILES}
