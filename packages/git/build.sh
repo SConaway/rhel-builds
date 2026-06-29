@@ -3,7 +3,7 @@
 # Called by the top-level build.sh. Writes artifacts to /build/output.
 set -euo pipefail
 
-VERSION="2.54.0"
+VERSION="2.55.0"
 NAME="git"
 SOURCE_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-${VERSION}.tar.gz"
 
@@ -20,6 +20,12 @@ dnf install -y --allowerasing \
     gcc make tar curl ca-certificates diffutils \
     openssl-devel libcurl-devel expat-devel zlib-devel \
     perl gettext pcre2-devel
+
+echo "==> Installing Rust toolchain"
+export RUSTUP_HOME=/build/rustup
+export CARGO_HOME=/build/cargo
+curl -fsSL https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile minimal
+source /build/cargo/env
 
 echo "==> Downloading git v${VERSION}"
 mkdir -p /build/src
