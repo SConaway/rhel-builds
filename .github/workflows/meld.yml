@@ -67,5 +67,5 @@ jobs:
           gh release create "${TAG}" \
             --title "meld v${VERSION}" \
             --notes "Binary builds of [meld v${VERSION}](https://gitlab.gnome.org/GNOME/meld/-/releases) for RHEL8/9 (built on AlmaLinux 8)." \
-            artifacts/**/*.tar.gz \
-            artifacts/**/*.sha256
+            artifacts/*/*.tar.gz \
+            artifacts/*/*.sha256

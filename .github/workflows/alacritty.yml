@@ -68,5 +68,5 @@ jobs:
           gh release create "${TAG}" \
             --title "alacritty v${VERSION}" \
             --notes "Binary builds of [alacritty v${VERSION}](https://github.com/alacritty/alacritty/releases/tag/v${VERSION}) for RHEL8/9 (built on AlmaLinux 8)." \
-            artifacts/**/*.tar.gz \
-            artifacts/**/*.sha256
+            artifacts/*/*.tar.gz \
+            artifacts/*/*.sha256

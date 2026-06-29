@@ -67,5 +67,5 @@ jobs:
           gh release create "${TAG}" \
             --title "leaf v${VERSION}" \
             --notes "Binary builds of [leaf v${VERSION}](https://github.com/RivoLink/leaf/releases/tag/${VERSION}) for RHEL8/9 (built on AlmaLinux 8)." \
-            artifacts/**/*.tar.gz \
-            artifacts/**/*.sha256
+            artifacts/*/*.tar.gz \
+            artifacts/*/*.sha256
