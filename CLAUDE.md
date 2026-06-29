@@ -56,3 +56,9 @@ Each workflow:
 - Only add an rhel9 build job if the rhel8 binary is confirmed not to work on RHEL9 (see portability note above)
 
 Tag convention for releases: `<package>-v<upstream-version>` (e.g. `leaf-v1.18.2`, `git-v2.54.0`).
+
+**Always push the branch and tags together in a single command** — if you push the branch first and tags separately, GitHub evaluates the tag push as having no file diff and the `paths` filter silently skips the workflow. Push everything at once:
+
+```bash
+git push origin main git-v2.55.0 leaf-v1.25.0  # etc.
+```
