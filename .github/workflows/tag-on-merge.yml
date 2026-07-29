@@ -14,10 +14,16 @@ jobs:
       startsWith(github.event.pull_request.head.ref, 'bump/')
     runs-on: ubuntu-latest
     steps:
+      # Tags pushed with the default GITHUB_TOKEN don't trigger other
+      # workflows' `on.push.tags` (GitHub's loop-prevention rule for
+      # actor == github-actions[bot]), which means the per-package release
+      # workflow would never fire. Check out with a PAT instead so the tag
+      # push is attributed to a real user and other workflows do trigger.
       - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TAG_PAT }}
 
       - name: Configure git identity
         run: |
@@ -26,5 +32,5 @@ jobs:
 
       - name: Create and push release tag
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_TAG_PAT }}
         run: ./scripts/tag-on-merge.sh "${{ github.event.pull_request.head.ref }}"
