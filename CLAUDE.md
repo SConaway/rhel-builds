@@ -62,3 +62,13 @@ Tag convention for releases: `<package>-v<upstream-version>` (e.g. `leaf-v1.18.2
 ```bash
 git push origin main git-v2.55.0 leaf-v1.25.0  # etc.
 ```
+
+## Automated update checking
+
+`.github/workflows/check-updates.yml` runs every 6 hours (and on `workflow_dispatch`) via `scripts/check-updates.sh`. For each `packages/<name>/build.sh` with a `VERSION="..."` line, it looks up the latest upstream version, and if it differs, patches `VERSION=`, pushes a `bump/<name>` branch, and opens (or updates, if one is already open) a PR. This is deterministic shell/CLI, not LLM-driven — no agent involved in the loop.
+
+`.github/workflows/tag-on-merge.yml` fires on `pull_request: closed` for any `bump/<name>` branch that was merged. It re-reads `VERSION=` from `main` post-merge and pushes the `<name>-v<version>` tag via `scripts/tag-on-merge.sh`, which then triggers the package's existing release workflow unchanged. Tagging is fully automatic; merging the bump PR is not — a human always reviews and merges it first.
+
+Version lookup (`scripts/get-latest-version.sh <pkg>`) defaults to checking the GitHub releases/tags of the repo in `SOURCE_URL`. If a package's upstream isn't a GitHub-tagged release — a non-GitHub host (e.g. `git`, which builds from a kernel.org tarball), a dynamically-computed `VERSION` (e.g. `meld`, whose version comes from `rpm -q`), or a repo whose tags need filtering/sorting beyond a plain "latest" — add `packages/<name>/check-version.sh` (executable, no args, prints the latest upstream version to stdout with no leading `v`). If present, it always overrides the generic checker. Packages with no static `VERSION="..."` line (like `meld`) are silently skipped by the checker rather than erroring.
+
+One-time manual setup: repo Settings → Actions → General → Workflow permissions must have "Allow GitHub Actions to create and approve pull requests" enabled, or `gh pr create`/`gh pr edit` in `check-updates.sh` will fail. This can't be set via the API.
