@@ -17,9 +17,17 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      # Pushes/PRs made with the default GITHUB_TOKEN are attributed to
+      # github-actions[bot], and GitHub's loop-prevention rule means events
+      # triggered by that token (branch pushes, PR opens) don't fire other
+      # workflows' push/pull_request triggers — so the per-package build
+      # workflows never run automatically on these bump PRs. Check out with
+      # a PAT instead so the push/PR is attributed to a real user and other
+      # workflows do trigger. Same fix as tag-on-merge.yml uses for tags.
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TAG_PAT }}
 
       - name: Configure git identity
         run: |
@@ -28,5 +36,5 @@ jobs:
 
       - name: Check each package for updates
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_TAG_PAT }}
         run: ./scripts/check-updates.sh

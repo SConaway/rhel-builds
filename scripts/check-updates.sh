@@ -30,6 +30,12 @@ for pkg_dir in packages/*/; do
         continue
     fi
 
+    release_tag="${pkg}-v${new_version}"
+    if git ls-remote --exit-code --tags origin "${release_tag}" >/dev/null 2>&1; then
+        echo "==> ${pkg}: release ${release_tag} already exists, skipping"
+        continue
+    fi
+
     echo "==> ${pkg}: ${current_version} -> ${new_version}"
     branch="bump/${pkg}"
 
