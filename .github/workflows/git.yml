@@ -29,6 +29,12 @@ jobs:
       - name: Build ${{ matrix.rhel_version }}
         run: ./build.sh git ${{ matrix.rhel_version }}
 
+      - name: Test on AlmaLinux 8
+        run: ./test.sh git rhel8
+
+      - name: Test on AlmaLinux 9 (rhel8 binary, glibc forwards-compat)
+        run: ./test.sh git rhel9
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:

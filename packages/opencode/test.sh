@@ -12,3 +12,12 @@ fi
 
 echo "==> opencode --version"
 "${BINARY}" --version
+
+echo "==> opencode models"
+MODELS=$("${BINARY}" models)
+echo "${MODELS}"
+
+if [[ -z "${MODELS}" ]]; then
+    echo "ERROR: 'opencode models' returned no output" >&2
+    exit 1
+fi
