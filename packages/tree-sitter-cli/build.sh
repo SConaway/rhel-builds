@@ -3,7 +3,7 @@
 # Called by the top-level build.sh. Writes artifacts to /build/output.
 set -euo pipefail
 
-VERSION="0.26.12"
+VERSION="0.26.13"
 NAME="tree-sitter"
 SOURCE_URL="https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v${VERSION}.tar.gz"
 
