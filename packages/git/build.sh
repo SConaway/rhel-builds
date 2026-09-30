@@ -3,7 +3,7 @@
 # Called by the top-level build.sh. Writes artifacts to /build/output.
 set -euo pipefail
 
-VERSION="2.55.0"
+VERSION="2.56.0"
 NAME="git"
 SOURCE_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-${VERSION}.tar.gz"
 
