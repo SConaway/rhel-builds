@@ -9,6 +9,7 @@ on:
       - '.github/workflows/opencode.yml'
     tags:
       - 'opencode-v*'
+      - '!opencode-v2-v*'  # opencode-v2 package has its own workflow
   pull_request:
     paths:
       - 'packages/opencode/**'

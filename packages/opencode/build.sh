@@ -4,7 +4,7 @@
 set -euo pipefail
 
 VERSION="1.18.35"
-BUN_VERSION="1.3.14"
+BUN_VERSION="1.4.2"
 NAME="opencode"
 SOURCE_URL="https://github.com/anomalyco/opencode/archive/refs/tags/v${VERSION}.tar.gz"
 BUN_URL="https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64-baseline.zip"
