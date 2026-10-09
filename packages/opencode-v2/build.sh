@@ -3,7 +3,7 @@
 # Called by the top-level build.sh. Writes artifacts to /build/output.
 set -euo pipefail
 
-VERSION="2.0.24"
+VERSION="2.0.26"
 BUN_VERSION="1.4.2"
 NAME="opencode-v2"
 SOURCE_URL="https://github.com/anomalyco/opencode/archive/refs/tags/v${VERSION}.tar.gz"
