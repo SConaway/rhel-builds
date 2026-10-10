@@ -71,9 +71,17 @@ for pkg_dir in packages/*/; do
     git commit -m "${pkg}: bump to ${new_version}"
     git push origin "${branch}" --force
 
+    changelog_url="$(./scripts/get-changelog-url.sh "${pkg}" "${current_version}" "${new_version}" || true)"
+    changelog_line=""
+    if [[ -n "${changelog_url}" ]]; then
+        changelog_line="Changelog: ${changelog_url}"
+    fi
+
     pr_title="${pkg}: bump to ${new_version}"
     pr_body=$(cat <<EOF
 Automated version bump for \`${pkg}\`: \`${current_version}\` -> \`${new_version}\`.
+
+${changelog_line}
 
 This PR was opened automatically by the scheduled update checker. Review the
 upstream changelog before merging. Merging will trigger an automatic
