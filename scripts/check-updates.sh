@@ -52,24 +52,36 @@ for pkg_dir in packages/*/; do
         echo "    stale PR targets ${pr_version}, updating to ${new_version}"
     fi
 
-    git checkout "${MAIN_BRANCH}"
-    git pull origin "${MAIN_BRANCH}"
-    git branch -D "${branch}" 2>/dev/null || true
-    git checkout -b "${branch}"
-
-    sed -i "s/^VERSION=\"${current_version}\"/VERSION=\"${new_version}\"/" "${build_script}"
-
-    # Sanity check: fail loudly if sed matched nothing (e.g. current_version
-    # had regex-special characters) rather than silently pushing a no-op diff.
-    if git diff --quiet "${build_script}"; then
-        echo "    ERROR: sed did not modify ${build_script}, aborting this package" >&2
+    # If the remote bump branch already carries new_version, don't recreate
+    # and force-push it: that would discard any fixup commits on the branch
+    # and re-trigger the package's build workflow for an identical change.
+    branch_version=$(git show "origin/${branch}:${build_script}" 2>/dev/null \
+        | grep -oP '^VERSION="\K[^"]+' || true)
+    if [[ "${branch_version}" == "${new_version}" ]]; then
+        echo "    ${branch} already at ${new_version}, not re-pushing"
+        if [[ -n "${existing_pr_json}" && "${existing_pr_json}" != "null" ]]; then
+            continue
+        fi
+    else
         git checkout "${MAIN_BRANCH}"
-        continue
-    fi
+        git pull origin "${MAIN_BRANCH}"
+        git branch -D "${branch}" 2>/dev/null || true
+        git checkout -b "${branch}"
 
-    git add "${build_script}"
-    git commit -m "${pkg}: bump to ${new_version}"
-    git push origin "${branch}" --force
+        sed -i "s/^VERSION=\"${current_version}\"/VERSION=\"${new_version}\"/" "${build_script}"
+
+        # Sanity check: fail loudly if sed matched nothing (e.g. current_version
+        # had regex-special characters) rather than silently pushing a no-op diff.
+        if git diff --quiet "${build_script}"; then
+            echo "    ERROR: sed did not modify ${build_script}, aborting this package" >&2
+            git checkout "${MAIN_BRANCH}"
+            continue
+        fi
+
+        git add "${build_script}"
+        git commit -m "${pkg}: bump to ${new_version}"
+        git push origin "${branch}" --force
+    fi
 
     changelog_url="$(./scripts/get-changelog-url.sh "${pkg}" "${current_version}" "${new_version}" || true)"
     changelog_line=""
