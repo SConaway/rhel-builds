@@ -50,6 +50,11 @@ case "${PKG}" in
             done
         fi
         ;;
+    opencode-v2)
+        # 2.x has no GitHub Releases; notes are on the project's changelog page.
+        echo "https://opencode.ai/changelog"
+        exit 0
+        ;;
     zsh)
         # Not on GitHub releases; NEWS in the project's SourceForge repo.
         url="https://sourceforge.net/p/zsh/code/ci/zsh-${NEW}/tree/NEWS"
