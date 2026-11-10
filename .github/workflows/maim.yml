@@ -1,0 +1,79 @@
+name: Build maim
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'packages/maim/**'
+      - 'build.sh'
+      - '.github/workflows/maim.yml'
+    tags:
+      - 'maim-v*'
+  pull_request:
+    paths:
+      - 'packages/maim/**'
+      - 'build.sh'
+      - '.github/workflows/maim.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rhel_version: [rhel8]  # add rhel9 if rhel8 build doesn't run on RHEL9
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build ${{ matrix.rhel_version }}
+        run: ./build.sh maim ${{ matrix.rhel_version }}
+
+      - name: Test on AlmaLinux 8
+        run: ./test.sh maim rhel8
+
+      - name: Test on AlmaLinux 9 (rhel8 binary, glibc forwards-compat)
+        run: ./test.sh maim rhel9
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: maim-${{ matrix.rhel_version }}
+          path: output/maim/${{ matrix.rhel_version }}/
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/maim-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts/
+          merge-multiple: false
+
+      - name: List artifacts
+        run: find artifacts/ -type f | sort
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#maim-v}"
+
+          FILES=$(find artifacts/ -type f \( -name "*.tar.gz" -o -name "*.sha256" \))
+
+          PRERELEASE=""
+          [[ "${VERSION}" == *-test* ]] && PRERELEASE="--prerelease"
+          UPSTREAM="${VERSION%%-*}"
+
+          gh release create "${TAG}" ${PRERELEASE} \
+            --title "maim v${VERSION}" \
+            --notes "Binary builds of [maim v${UPSTREAM}](https://github.com/naelstrof/maim/releases/tag/v${UPSTREAM}) for RHEL8/9 (built on AlmaLinux 8), with slop and bundled libraries." \
+            ${FILES}
