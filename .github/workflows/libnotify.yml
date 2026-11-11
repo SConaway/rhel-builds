@@ -1,0 +1,79 @@
+name: Build libnotify
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'packages/libnotify/**'
+      - 'build.sh'
+      - '.github/workflows/libnotify.yml'
+    tags:
+      - 'libnotify-v*'
+  pull_request:
+    paths:
+      - 'packages/libnotify/**'
+      - 'build.sh'
+      - '.github/workflows/libnotify.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rhel_version: [rhel8]  # add rhel9 if rhel8 build doesn't run on RHEL9
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build ${{ matrix.rhel_version }}
+        run: ./build.sh libnotify ${{ matrix.rhel_version }}
+
+      - name: Test on AlmaLinux 8
+        run: ./test.sh libnotify rhel8
+
+      - name: Test on AlmaLinux 9 (rhel8 binary, glibc forwards-compat)
+        run: ./test.sh libnotify rhel9
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: libnotify-${{ matrix.rhel_version }}
+          path: output/libnotify/${{ matrix.rhel_version }}/
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/libnotify-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts/
+          merge-multiple: false
+
+      - name: List artifacts
+        run: find artifacts/ -type f | sort
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#libnotify-v}"
+
+          FILES=$(find artifacts/ -type f \( -name "*.tar.gz" -o -name "*.sha256" \))
+
+          PRERELEASE=""
+          [[ "${VERSION}" == *-test* ]] && PRERELEASE="--prerelease"
+          UPSTREAM="${VERSION%%-*}"
+
+          gh release create "${TAG}" ${PRERELEASE} \
+            --title "libnotify v${VERSION}" \
+            --notes "Binary builds of [libnotify v${UPSTREAM}](https://gitlab.gnome.org/GNOME/libnotify/-/tags/${UPSTREAM}) for RHEL8/9 (built on AlmaLinux 8), with bundled libraries." \
+            ${FILES}
