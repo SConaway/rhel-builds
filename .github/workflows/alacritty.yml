@@ -43,13 +43,15 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/alacritty-v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/alacritty-v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
+      - uses: actions/checkout@v7
+
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
@@ -59,14 +61,6 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          shopt -s globstar
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#alacritty-v}"
-
-          gh release create "${TAG}" \
-            --title "alacritty v${VERSION}" \
-            --notes "Binary builds of [alacritty v${VERSION}](https://github.com/alacritty/alacritty/releases/tag/v${VERSION}) for RHEL8/9 (built on AlmaLinux 8)." \
-            artifacts/*/*.tar.gz \
-            artifacts/*/*.sha256
+        run: >-
+          ./scripts/release.sh alacritty
+          'Binary builds of [alacritty v{version}](https://github.com/alacritty/alacritty/releases/tag/v{version}) for RHEL8/9 (built on AlmaLinux 8).'

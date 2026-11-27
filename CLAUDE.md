@@ -52,25 +52,23 @@ Binaries built on AlmaLinux 8 (glibc 2.28) are forwards-compatible with AlmaLinu
 Each workflow:
 - Triggers on branch pushes that touch `packages/<name>/`, `build.sh`, or the workflow file itself, and on `<name>-v*` tags. **Both `branches: ['**']` and `tags` must be present under `push`** — omitting `branches` causes GitHub Actions to silently ignore branch pushes when a `tags` filter is present.
 - Builds rhel8 only (AlmaLinux 8 binaries run on both RHEL8 and RHEL9 due to glibc forwards-compatibility)
-- On a `<name>-v*` tag, the `release` job creates a GitHub release and uploads the tarball + sha256
+- After a successful build on `main` or on a `<name>-v*` tag, the `release` job runs `scripts/release.sh`, which creates a GitHub release with the tarball + sha256 unless one already exists for that tag. On `main` the version comes from `VERSION=` in the package's `build.sh`, and the release creates the tag. Changing how a package is built without changing `VERSION` does not replace an existing release
 - Only add an rhel9 build job if the rhel8 binary is confirmed not to work on RHEL9 (see portability note above)
 
 Tag convention for releases: `<package>-v<upstream-version>` (e.g. `leaf-v1.18.2`, `git-v2.54.0`).
 
-**Always push the branch and tags together in a single command** — if you push the branch first and tags separately, GitHub evaluates the tag push as having no file diff and the `paths` filter silently skips the workflow. Push everything at once:
-
-```bash
-git push origin main git-v2.55.0 leaf-v1.25.0  # etc.
-```
+To release, merge or push the `VERSION=` change to `main`; no manual tag is needed. Packages without a static `VERSION="..."` line (like `meld`) are released only by pushing a tag. If you do push a tag by hand, push it in the same command as its branch — if you push the branch first and tags separately, GitHub evaluates the tag push as having no file diff and the `paths` filter silently skips the workflow. Pushing `main` and a tag together builds twice.
 
 ## Automated update checking
 
 `.github/workflows/check-updates.yml` runs every 6 hours (and on `workflow_dispatch`) via `scripts/check-updates.sh`. For each `packages/<name>/build.sh` with a `VERSION="..."` line, it looks up the latest upstream version, and if it differs, patches `VERSION=`, pushes a `bump/<name>` branch, and opens (or updates, if one is already open) a PR. This is deterministic shell/CLI, not LLM-driven — no agent involved in the loop.
 
-`.github/workflows/tag-on-merge.yml` fires on `pull_request: closed` for any `bump/<name>` branch that was merged. It re-reads `VERSION=` from `main` post-merge and pushes the `<name>-v<version>` tag via `scripts/tag-on-merge.sh`, which then triggers the package's existing release workflow unchanged. Tagging is fully automatic; merging the bump PR is not — a human always reviews and merges it first.
+Merging a bump PR pushes to `main`, which builds the package and publishes its release (see above). Releasing is automatic; merging the bump PR is not — a human always reviews and merges it first.
+
+`.github/workflows/tag-on-merge.yml` and `scripts/tag-on-merge.sh` are the previous tagging mechanism. The workflow is disabled in GitHub Actions; re-enabling it would build each release twice.
 
 Version lookup (`scripts/get-latest-version.sh <pkg>`) defaults to checking the GitHub releases/tags of the repo in `SOURCE_URL`. If a package's upstream isn't a GitHub-tagged release — a non-GitHub host (e.g. `git`, which builds from a kernel.org tarball), a dynamically-computed `VERSION` (e.g. `meld`, whose version comes from `rpm -q`), or a repo whose tags need filtering/sorting beyond a plain "latest" — add `packages/<name>/check-version.sh` (executable, no args, prints the latest upstream version to stdout with no leading `v`). If present, it always overrides the generic checker. Packages with no static `VERSION="..."` line (like `meld`) are silently skipped by the checker rather than erroring.
 
 One-time manual setup:
 - Repo Settings → Actions → General → Workflow permissions must have "Allow GitHub Actions to create and approve pull requests" enabled, or `gh pr create`/`gh pr edit` in `check-updates.sh` will fail. This can't be set via the API.
-- `tag-on-merge.yml` and `check-updates.yml` both need a `RELEASE_TAG_PAT` repo secret (Settings → Secrets and variables → Actions): a personal access token (classic or fine-grained, `contents: write` + `pull_requests: write` on this repo) used to push tags/branches and open PRs as a real user instead of `GITHUB_TOKEN`. **This is required, not optional** — pushes/tags/PRs made with the default `GITHUB_TOKEN` are attributed to `github-actions[bot]`, and GitHub's loop-prevention rule silently blocks anything triggered by that token from firing other workflows' `push`/`pull_request`/`on.push.tags` triggers. For `tag-on-merge.yml` that means the per-package release workflow never fires; for `check-updates.yml` it means the per-package build workflow never runs on the bump PR (looks like it's stuck waiting on manual approval). A PAT belonging to a real user avoids both.
+- `check-updates.yml` needs a `RELEASE_TAG_PAT` repo secret (Settings → Secrets and variables → Actions): a personal access token (classic or fine-grained, `contents: write` + `pull_requests: write` on this repo) used to push branches and open PRs as a real user instead of `GITHUB_TOKEN`. **This is required, not optional** — pushes/PRs made with the default `GITHUB_TOKEN` are attributed to `github-actions[bot]`, and GitHub's loop-prevention rule silently blocks them from triggering other workflows, so the per-package build workflow never runs on the bump PR (looks like it's stuck waiting on manual approval).

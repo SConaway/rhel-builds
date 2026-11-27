@@ -96,8 +96,8 @@ Automated version bump for \`${pkg}\`: \`${current_version}\` -> \`${new_version
 ${changelog_line}
 
 This PR was opened automatically by the scheduled update checker. Review the
-upstream changelog before merging. Merging will trigger an automatic
-\`${pkg}-v${new_version}\` release tag.
+upstream changelog before merging. Merging will build and publish the
+\`${pkg}-v${new_version}\` release.
 
 <!-- new-version: ${new_version} -->
 EOF

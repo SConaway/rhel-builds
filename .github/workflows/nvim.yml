@@ -43,33 +43,24 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/nvim-v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/nvim-v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
+      - uses: actions/checkout@v7
+
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
           path: artifacts/
           merge-multiple: false
 
-      - name: List artifacts
-        run: find artifacts/ -type f | sort
-
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#nvim-v}"
-
-          FILES=$(find artifacts/ -type f \( -name "*.tar.gz" -o -name "*.sha256" \))
-
-          gh release create "${TAG}" \
-            --title "nvim v${VERSION}" \
-            --notes "Binary builds of [nvim v${VERSION}](https://github.com/neovim/neovim/releases/tag/v${VERSION}) for RHEL8/9 (built on AlmaLinux 8)." \
-            ${FILES}
+        run: >-
+          ./scripts/release.sh nvim
+          'Binary builds of [nvim v{version}](https://github.com/neovim/neovim/releases/tag/v{version}) for RHEL8/9 (built on AlmaLinux 8).'

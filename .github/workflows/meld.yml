@@ -43,13 +43,15 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/meld-v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/meld-v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
+      - uses: actions/checkout@v7
+
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
@@ -59,13 +61,6 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#meld-v}"
-
-          gh release create "${TAG}" \
-            --title "meld v${VERSION}" \
-            --notes "Binary builds of [meld v${VERSION}](https://gitlab.gnome.org/GNOME/meld/-/releases) for RHEL8/9 (built on AlmaLinux 8)." \
-            artifacts/*/*.tar.gz \
-            artifacts/*/*.sha256
+        run: >-
+          ./scripts/release.sh meld
+          'Binary builds of [meld v{version}](https://gitlab.gnome.org/GNOME/meld/-/releases) for RHEL8/9 (built on AlmaLinux 8).'

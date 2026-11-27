@@ -43,37 +43,24 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/i3-v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/i3-v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
+      - uses: actions/checkout@v7
+
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
           path: artifacts/
           merge-multiple: false
 
-      - name: List artifacts
-        run: find artifacts/ -type f | sort
-
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#i3-v}"
-
-          FILES=$(find artifacts/ -type f \( -name "*.tar.gz" -o -name "*.sha256" \))
-
-          PRERELEASE=""
-          [[ "${VERSION}" == *-test* ]] && PRERELEASE="--prerelease"
-          UPSTREAM="${VERSION%%-*}"
-
-          gh release create "${TAG}" ${PRERELEASE} \
-            --title "i3 v${VERSION}" \
-            --notes "Binary builds of [i3 v${UPSTREAM}](https://i3wm.org/downloads/) for RHEL8/9 (built on AlmaLinux 8), with bundled libraries." \
-            ${FILES}
+        run: >-
+          ./scripts/release.sh i3
+          'Binary builds of [i3 v{version}](https://i3wm.org/downloads/) for RHEL8/9 (built on AlmaLinux 8), with bundled libraries.'
